@@ -1,73 +1,78 @@
 package br.com.alura.apiforum.service
 
-import br.com.alura.apiforum.model.Curso
+import br.com.alura.apiforum.dto.TopicoForm
+import br.com.alura.apiforum.dto.TopicoUpdateForm
+import br.com.alura.apiforum.dto.TopicoView
+import br.com.alura.apiforum.exception.NotFoundException
+import br.com.alura.apiforum.mapper.TopicoFormMapper
+import br.com.alura.apiforum.mapper.TopicoViewMapper
 import br.com.alura.apiforum.model.Topico
-import br.com.alura.apiforum.model.Usuario
 import org.springframework.stereotype.Service
 import java.util.*
+import java.util.stream.Collectors
 
 @Service
-class TopicoService(private var topicos: List<Topico>) {
+class TopicoService(
+        private var topicos: List<Topico>,
+        private val topicoViewMapper: TopicoViewMapper,
+        private val topicoFormMapper: TopicoFormMapper,
+        private var notFoundMessage: String?
+    ){
 
     init{
-        val topico1 = Topico(
-            id = 1,
-            titulo = "Dúvida",
-            mensagem = "Variáveis no tópico",
-            curso = Curso(
-                id = 1,
-                nome = "Kotlin",
-                categoria = "Programação"
-            ),
-            autor = Usuario(
-                id = 1,
-                nome = "Ruan Kenned",
-                email = "ruan@kennedm.com"
-            )
-        );
-
-        val topico2 = Topico(
-            id = 2,
-            titulo = "Dúvida 2",
-            mensagem = "Variáveis no tópico 2",
-            curso = Curso(
-                id = 2,
-                nome = "Kotlin 2",
-                categoria = "Programação 2"
-            ),
-            autor = Usuario(
-                id = 1,
-                nome = "Ruan Kenned 2",
-                email = "ruan@kennedm.com 2"
-            )
-        );
-
-        val topico3 = Topico(
-            id = 3,
-            titulo = "Dúvida 3",
-            mensagem = "Variáveis no tópico 3",
-            curso = Curso(
-                id = 3,
-                nome = "Kotlin 3",
-                categoria = "Programação 3"
-            ),
-            autor = Usuario(
-                id = 1,
-                nome = "Ruan Kenned 3",
-                email = "ruan@kennedm.com 3"
-            )
-        );
-        topicos = Arrays.asList(topico1, topico2, topico3);
+        topicos = ArrayList();
+        notFoundMessage = "Tópico não encontrado";
     }
 
-    fun findAll(): List<Topico> {
-        return this.topicos;
+    fun findAll(): List<TopicoView> {
+        return this.topicos.stream().map {
+                t -> topicoViewMapper.map(t)
+        }.collect(Collectors.toList());
     }
 
-    fun findById(id: Long): Topico {
-        return this.topicos.stream().filter({
-                t -> t.id == id
-        }).findFirst().get();
+    fun findById(idTopico: Long): TopicoView {
+        var topico = this.topicos.stream().filter{
+                t -> t.id == idTopico
+        }.findFirst().orElseThrow {
+            NotFoundException(notFoundMessage)
+        };
+
+        return topicoViewMapper.map(topico)
     }
 
+    fun insert(topicoForm: TopicoForm): TopicoView {
+        var topico = topicoFormMapper.map(topicoForm);
+        topico.id = this.topicos.size.toLong() + 1;
+        this.topicos = this.topicos.plus(topico);
+        return topicoViewMapper.map(topico);
+    }
+    
+    fun update(topicoUpdateForm: TopicoUpdateForm): TopicoView {
+        var topico = this.topicos.stream().filter{
+                t -> t.id == topicoUpdateForm.id
+        }.findFirst().orElseThrow {
+            NotFoundException(notFoundMessage)
+        };
+        val novoTopico = Topico(
+            id = topico.id,
+            titulo = topicoUpdateForm.titulo,
+            mensagem = topicoUpdateForm.mensagem,
+            autor = topico.autor,
+            curso = topico.curso,
+            status = topico.status,
+            respostas = topico.respostas,
+            dataCriacao = topico.dataCriacao
+        );
+        this.topicos = topicos.minus(topico).plus(novoTopico);
+        return topicoViewMapper.map(novoTopico);
+    }
+    
+    fun delete(idTopico: Long) {
+        var topico = this.topicos.stream().filter{
+                t -> t.id == idTopico
+        }.findFirst().orElseThrow {
+            NotFoundException(notFoundMessage)
+        };
+        this.topicos = topicos.minus(topico);
+    }
 }
