@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.util.UriBuilder
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
+import javax.transaction.Transactional
 import javax.validation.Valid
 
 @RestController
@@ -35,6 +36,7 @@ class TopicoController(private val service: TopicoService){
     }
 
     @PostMapping
+    @Transactional
     fun insert(@RequestBody @Valid topicoForm: TopicoForm, uriBuilder: UriComponentsBuilder): ResponseEntity<TopicoView>{
         val topicoView = service.insert(topicoForm);
         val uri = uriBuilder.path("/topicos/${topicoView.id}").build().toUri();
@@ -42,6 +44,7 @@ class TopicoController(private val service: TopicoService){
     }
 
     @PutMapping
+    @Transactional
     fun update(@RequestBody @Valid topicoForm: TopicoUpdateForm, uriBuilder: UriComponentsBuilder): ResponseEntity<TopicoView>{
         val topicoView = service.update(topicoForm);
         return ResponseEntity.ok(topicoView);
@@ -49,6 +52,7 @@ class TopicoController(private val service: TopicoService){
     
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
     fun delete(@PathVariable id: Long) {
         return service.delete(id);
     }

@@ -1,23 +1,14 @@
 package br.com.alura.apiforum.service
 
 import br.com.alura.apiforum.model.Curso
+import br.com.alura.apiforum.repository.CursoRepository
 import org.springframework.stereotype.Service
 import java.util.Arrays
 
 @Service
-class CursoService (var cursos: List<Curso>) {
-    init {
-        val curso = Curso(
-            id = 1,
-            nome = "Kotlin",
-            categoria = "Programação"
-        );
-        this.cursos = Arrays.asList(curso);
-    }
-
+class CursoService (private val repository: CursoRepository) {
+   
     fun findById(id: Long): Curso{
-        return this.cursos.stream().filter {
-                c -> c.id == id
-        }.findFirst().get();
+        return repository.findById(id).get()
     }
 }
